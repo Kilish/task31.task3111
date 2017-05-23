@@ -1,0 +1,82 @@
+package testforjava;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
+
+//C:\Users\zhakypbekov_30855\Desktop\test1//Записи.txt
+class SearchFileVisitor extends SimpleFileVisitor<Path> {
+	private String partOfName;
+	private String partOfContent;
+	private long minSize;
+	private long maxSize;
+	private List<Path> foundFiles = new ArrayList<Path>();
+    public void setPartOfName(String partOfName) {
+		this.partOfName = partOfName;
+	}
+
+	public void setPartOfContent(String partOfContent) {
+		this.partOfContent = partOfContent;
+	}
+
+	public void setMinSize(long minSize) {
+		this.minSize = minSize;
+	}
+
+	public void setMaxSize(long maxSize) {
+		this.maxSize = maxSize;
+	}
+
+	public List<Path> getFoundFiles(){
+		
+		return foundFiles;
+	}
+	@Override
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+		if(partOfName != null && (file.getFileName().toString().indexOf(partOfName) != -1)){
+			foundFiles.add(file);
+		}
+		if(partOfContent != null){
+			if(!foundFiles.contains(file)){
+				BufferedReader reader = Files.newBufferedReader(file, Charset.defaultCharset());
+				while(reader.ready()){
+					String str = reader.readLine();
+					if(str.indexOf(partOfContent) != -1)
+						foundFiles.add(file);
+				}
+			}
+			
+		}
+		if(minSize != 0 && attrs.size() > minSize){
+			if(!foundFiles.contains(file))
+			foundFiles.add(file);
+		}
+		if(maxSize != 0 && attrs.size() < maxSize){
+			if(!foundFiles.contains(file))
+			foundFiles.add(file);
+		}
+        return super.visitFile(file, attrs);
+    }
+}
+class Task extends SimpleFileVisitor<Path> {
+
+	public static void main(String[] args) throws IOException {
+        SearchFileVisitor searchFileVisitor = new SearchFileVisitor();
+
+        searchFileVisitor.setPartOfName("amigo");
+        searchFileVisitor.setPartOfContent("programmer");
+        searchFileVisitor.setMinSize(500);
+        searchFileVisitor.setMaxSize(10000);
+
+        Files.walkFileTree(Paths.get("C:\\Users\\zhakypbekov_30855\\Desktop\\test1"), searchFileVisitor);
+
+        List<Path> foundFiles = searchFileVisitor.getFoundFiles();
+        for (Path file : foundFiles) {
+            System.out.println(file);
+        }
+    }
+}
+
